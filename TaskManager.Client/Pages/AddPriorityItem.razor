@@ -1,0 +1,83 @@
+﻿@page "/addpriorityitem"
+@using System.Net.Http.Headers
+@using TaskManager.Client.AuthService
+
+<PageTitle>Add Priority Item</PageTitle>
+
+<EditForm Model="priorityListDto" OnValidSubmit="HandleAddPriorityItem">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="priorityname" class="form-label">Priority Name:</label>
+        <InputText id="priorityname" @bind-Value="priorityListDto.PriorityName" class="form-control" />
+        <ValidationMessage For="@(() => priorityListDto.PriorityName)" />
+    </div>
+    @if (IsFormValid())
+    {
+        <button type="submit" class="btn btn-primary mt-2">Create Priority Item</button>
+    }
+</EditForm>
+
+<p class="mt-4">
+    <button @onclick="BackToNavigateToPriorityPage" class="btn btn-secondary">Go Back to Priority List</button>
+</p>
+
+@code {
+
+    private bool IsFormValid()
+    {
+        return !string.IsNullOrEmpty(priorityListDto.PriorityName);
+    }
+    private PriorityItemModel priorityListDto = new PriorityItemModel();
+
+    [Inject]
+    private HttpClient Http { get; set; }
+    
+    [Inject]
+    private AuthService _service { get; set; }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; }
+
+    private async System.Threading.Tasks.Task HandleAddPriorityItem()
+    {
+        try
+        {
+            priorityListDto.UserId = await _service.GetUserId();
+            await _service.AddAuthorizationHeader();
+            var response = await Http.PostAsJsonAsync("http://localhost:5242/api/PriorityListGateway/Add", priorityListDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                SuccessfulNavigateToPriorityPage();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                Console.Error.WriteLine($"API Error: {errorMessage}");
+                Navigation.NavigateTo("/error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Exception: {ex.Message}");
+            Navigation.NavigateTo("/error");
+        }
+    }
+
+    private void BackToNavigateToPriorityPage()
+    {
+        Navigation.NavigateTo("/priority");
+    }
+    private void SuccessfulNavigateToPriorityPage()
+    {
+        Navigation.NavigateTo("/priority", forceLoad:true);
+    }
+
+    public class PriorityItemModel
+    {
+        public string PriorityName { get; set; }
+        public Guid? UserId { get; set; }
+    }
+}

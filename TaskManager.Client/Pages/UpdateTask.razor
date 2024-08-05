@@ -1,0 +1,128 @@
+@page "/updatetask/{taskId:guid}"
+@using System.Net
+@using System.Text
+@using System.Text.Json
+@using TaskManager.Client.AuthService
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Update Task</PageTitle>
+
+@if (updateTaskDto != null)
+{
+    <EditForm Model="updateTaskDto" OnValidSubmit="HandleUpdateTask">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="taskname">Task Name:</label>
+            <InputText id="taskname" class="form-control" @bind-Value="updateTaskDto.TaskName" />
+        </div>
+        <div class="form-group">
+            <label for="tasknotes">Task Notes:</label>
+            <InputText id="tasknotes" class="form-control" @bind-Value="updateTaskDto.TaskNotes" />
+        </div>
+        <div class="form-group">
+            <label for="deadline">Deadline:</label>
+            <InputDate id="deadline" class="form-control" @bind-Value="updateTaskDto.Deadline" />
+        </div>
+        <div class="form-group">
+            <label for="priority">Priority:</label>
+            @if (_priority != null && _priority.Any())
+            {
+                <select id="priority" class="form-control" @bind="updateTaskDto.PriorityId">
+                    <option value="">-- Select Priority --</option>
+                    @foreach (var priority in _priority)
+                    {
+                        <option value="@priority.priorityId">@priority.priorityName</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <p>Loading priorities...</p>
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Task</button>
+    </EditForm>
+}
+else
+{
+    <p>Loading task details...</p>
+}
+<p class="mt-3">
+    <button @onclick="NavigateToTaskPage" class="btn btn-secondary">Go to Task List</button>
+</p>
+
+@code {
+    [Parameter]
+    public Guid TaskId { get; set; }
+    private Priority.PriorityItemModel[]? _priority;
+    private UpdateTaskDto updateTaskDto = new UpdateTaskDto();
+    [Inject]
+    private AuthService _authService { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        _priority = await GetAllPriorities();
+        await _authService.AddAuthorizationHeader();
+        var response = await Http.GetAsync($"http://localhost:5242/api/TaskGateway/GetTask?taskId={TaskId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonString = await response.Content.ReadAsStringAsync();
+            updateTaskDto = JsonSerializer.Deserialize<UpdateTaskDto>(jsonString, 
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new UpdateTaskDto();
+        }
+        else
+        {
+            Navigation.NavigateTo("/error");
+        }
+    }
+
+    private async System.Threading.Tasks.Task HandleUpdateTask()
+    {
+        var jsonContent = new StringContent(JsonSerializer.Serialize(updateTaskDto), 
+            Encoding.UTF8, "application/json");
+        await _authService.AddAuthorizationHeader();
+        var response = await Http.PutAsync($"http://localhost:5242/api/TaskGateway/UpdateTask/{TaskId}", jsonContent);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/task", forceLoad:true);
+        }
+        else
+        {
+            Navigation.NavigateTo("/error");
+        }
+    }
+
+    private void NavigateToTaskPage()
+    {
+        Navigation.NavigateTo("/task");
+    }
+
+    public class UpdateTaskDto
+    {
+        public string TaskName { get; set; }
+        public string? TaskNotes { get; set; }
+        public DateTimeOffset? Deadline { get; set; }
+        public Guid? PriorityId { get; set; }
+        public Priority.PriorityItemModel? Priorities { get; set; }
+    }
+
+    private async Task<Priority.PriorityItemModel[]> GetAllPriorities()
+    {
+        var userId = await _authService.GetUserId();
+        await _authService.AddAuthorizationHeader();
+        var response = await Http.GetAsync($"http://localhost:5242/api/PriorityListGateway/GetPriorityList?userId={userId}");
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonString = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<Priority.PriorityItemModel[]>(jsonString, 
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        return Array.Empty<Priority.PriorityItemModel>();
+    }
+}

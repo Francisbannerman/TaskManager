@@ -1,0 +1,126 @@
+@page "/addtask"
+@using System.Net
+@using System.Text.Json
+@using TaskManager.Client.AuthService
+@inject HttpClient Http
+
+<PageTitle>Add Task</PageTitle>
+
+<EditForm Model="createTaskDto" OnValidSubmit="HandleAddTask">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="taskname" class="form-label">Task Name:</label>
+        <InputText id="taskname" @bind-Value="createTaskDto.TaskName" class="form-control" />
+        <ValidationMessage For="@(() => createTaskDto.TaskName)" />
+    </div>
+    
+    <div class="form-group">
+        <label for="tasknotes" class="form-label">Task Notes:</label>
+        <InputText id="tasknotes" @bind-Value="createTaskDto.TaskNotes" class="form-control" />
+        <ValidationMessage For="@(() => createTaskDto.TaskNotes)" />
+    </div>
+    
+    <div class="form-group">
+        <label for="deadline" class="form-label">Deadline:</label>
+        <InputDate id="deadline" @bind-Value="createTaskDto.Deadline" class="form-control" />
+        <ValidationMessage For="@(() => createTaskDto.Deadline)" />
+    </div>
+    
+    <div class="form-group">
+        <label for="priority" class="form-label">Priority:</label>
+        @if (_priority != null && _priority.Any())
+        {
+            <select id="priority" @bind="createTaskDto.PriorityId" class="form-control">
+                <option value="">-- Select Priority --</option>
+                @foreach (var priority in _priority)
+                {
+                    <option value="@priority.priorityId">@priority.priorityName</option>
+                }
+            </select>
+            <ValidationMessage For="@(() => createTaskDto.PriorityId)" />
+        }
+        else
+        {
+            <p>Loading priorities...</p>
+        }
+    </div>
+    
+    @if (IsFormValid())
+    {
+        <button type="submit" class="btn btn-primary mt-3">Create Task</button>
+    }
+</EditForm>
+
+<p class="mt-4">
+    <button @onclick="NavigateToTaskPage" class="btn btn-secondary">Go Back to Task List</button>
+</p>
+
+@code {
+    private Priority.PriorityItemModel[]? _priority;
+    private CreateTaskDto createTaskDto { get; set; } = new CreateTaskDto();
+
+    private bool IsFormValid()
+    {
+        return !string.IsNullOrEmpty(createTaskDto.TaskName) &&
+               !string.IsNullOrEmpty(createTaskDto.TaskNotes) &&
+               createTaskDto.Deadline.HasValue &&
+               createTaskDto.PriorityId.HasValue;
+    }
+    [Inject]
+    private NavigationManager Navigation { get; set; }
+    
+    [Inject]
+    private AuthService _authService { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        var _userId = await _authService.GetUserId();
+        createTaskDto.UserId = _userId;
+
+        _priority = await GetAllPriorities();
+    }
+
+    private async System.Threading.Tasks.Task HandleAddTask()
+    {
+        await _authService.AddAuthorizationHeader();
+        var response = await Http.PostAsJsonAsync("http://localhost:5242/api/TaskGateway/AddTask", createTaskDto);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/task", forceLoad: true);
+        }
+        else
+        {
+            Navigation.NavigateTo("/error");
+        }
+    }
+
+    private void NavigateToTaskPage()
+    {
+        Navigation.NavigateTo("/task");
+    }
+
+    public class CreateTaskDto
+    {
+        public string TaskName { get; set; }
+        public string? TaskNotes { get; set; }
+        public DateTimeOffset? Deadline { get; set; }
+        public Guid? PriorityId { get; set; }
+        public Guid? UserId { get; set; }
+    }
+
+    private async Task<Priority.PriorityItemModel[]> GetAllPriorities()
+    {
+        var userId = await _authService.GetUserId();
+        await _authService.AddAuthorizationHeader();
+        var response = await Http.GetAsync($"http://localhost:5242/api/PriorityListGateway/GetPriorityList?userId={userId}");
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonString = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<Priority.PriorityItemModel[]>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        return Array.Empty<Priority.PriorityItemModel>();
+    }
+}
