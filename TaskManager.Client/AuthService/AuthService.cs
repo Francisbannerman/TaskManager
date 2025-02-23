@@ -14,14 +14,18 @@ public class AuthService
     private readonly HttpClient _http;
     private readonly IJSRuntime _js;
     private readonly NavigationManager _navigationManager;
+    private readonly AppState _appState;
 
-    public AuthService(HttpClient http, IJSRuntime js, NavigationManager navigationManager)
+    public AuthService(HttpClient http, IJSRuntime js, NavigationManager navigationManager, AppState appState)
     {
         _http = http;
         _js = js;
         _navigationManager = navigationManager;
+        _appState = appState;
     }
 
+    
+    
     public async Task<bool> CreateAccount(Home.UserModel userModel)
     {
         var response = await _http.PostAsJsonAsync("http://localhost:5242/api/UserGateway/AddUser", userModel);
@@ -31,11 +35,10 @@ public class AuthService
             var token = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(token))
             {
-                Console.WriteLine(response.Content.ReadAsStringAsync());
                 throw new Exception(await response.Content.ReadAsStringAsync());
             }
             await _js.InvokeVoidAsync("localStorage.setItem", "authToken", token);
-
+            _appState.SetLoginState(true);
             return true;
         }
         return false;
@@ -49,9 +52,8 @@ public class AuthService
         if (response.IsSuccessStatusCode)
         {
             var token = await response.Content.ReadAsStringAsync();
-            
             await _js.InvokeVoidAsync("localStorage.setItem", "authToken", token);
-            
+            _appState.SetLoginState(true);
             return true;
         }
         return false;
@@ -78,6 +80,7 @@ public class AuthService
     public async Task Logout()
     {
         await _js.InvokeVoidAsync("localStorage.removeItem", "token");
+        _appState.SetLoginState(false);
         _navigationManager.NavigateTo("/login", forceLoad:true);
     }
 

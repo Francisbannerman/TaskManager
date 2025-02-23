@@ -12,7 +12,7 @@ using TaskManager.DataProvider;
 namespace TaskManager.DataProvider.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240802234202_InitialCreate1")]
+    [Migration("20240805065103_InitialCreate1")]
     partial class InitialCreate1
     {
         /// <inheritdoc />
@@ -47,17 +47,17 @@ namespace TaskManager.DataProvider.Migrations
                     b.HasData(
                         new
                         {
-                            PriorityId = new Guid("d3cb887d-3a3c-4465-8ea1-2da0ce7e31b2"),
+                            PriorityId = new Guid("1dd9650e-b708-4ef5-8772-44853fb5c91e"),
                             PriorityName = "Urgent"
                         },
                         new
                         {
-                            PriorityId = new Guid("21521056-e391-473c-a4ba-485be8cf62d7"),
+                            PriorityId = new Guid("0eb13bb3-a682-431b-ba2f-b702cd07142e"),
                             PriorityName = "Important"
                         },
                         new
                         {
-                            PriorityId = new Guid("945d313f-e3b3-4b10-a823-d0d9c18ca4f3"),
+                            PriorityId = new Guid("f45713ab-23af-470d-a4ad-9accb2bafea8"),
                             PriorityName = "Urgent & Important"
                         });
                 });
@@ -100,6 +100,19 @@ namespace TaskManager.DataProvider.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Tasks");
+
+                    b.HasData(
+                        new
+                        {
+                            TaskId = new Guid("c4383029-e9b2-42a8-b216-814b541490d2"),
+                            CreatedDate = new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7080), new TimeSpan(0, 0, 0, 0, 0)),
+                            DateEnded = new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7080), new TimeSpan(0, 0, 0, 0, 0)),
+                            Deadline = new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7040), new TimeSpan(0, 0, 0, 0, 0)),
+                            Position = 0,
+                            PriorityId = new Guid("1dd9650e-b708-4ef5-8772-44853fb5c91e"),
+                            TaskName = "Sample Task",
+                            TaskNotes = "This is a sample task. Feel free to delete anytime"
+                        });
                 });
 
             modelBuilder.Entity("TaskManager.Infrastructure.User", b =>
@@ -122,6 +135,15 @@ namespace TaskManager.DataProvider.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = new Guid("db221a5a-db6e-473a-ba5e-088649b6f5cb"),
+                            DateCreated = new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7120), new TimeSpan(0, 0, 0, 0, 0)),
+                            Password = "adminPassword",
+                            Username = "admin"
+                        });
                 });
 
             modelBuilder.Entity("TaskManager.Infrastructure.PriorityList", b =>

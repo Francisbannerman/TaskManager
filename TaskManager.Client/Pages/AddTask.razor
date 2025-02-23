@@ -60,6 +60,8 @@
 @code {
     private Priority.PriorityItemModel[]? _priority;
     private CreateTaskDto createTaskDto { get; set; } = new CreateTaskDto();
+    [Inject]
+    private AppState _appState { get; set; }
 
     private bool IsFormValid()
     {
@@ -89,7 +91,8 @@
         
         if (response.IsSuccessStatusCode)
         {
-            Navigation.NavigateTo("/task", forceLoad: true);
+            _appState.SetLoginState(true);
+            Navigation.NavigateTo("/task", forceLoad:true);
         }
         else
         {

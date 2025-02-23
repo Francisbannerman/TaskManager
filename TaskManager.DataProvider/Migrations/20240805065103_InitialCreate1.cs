@@ -79,10 +79,20 @@ namespace TaskManager.DataProvider.Migrations
                 columns: new[] { "PriorityId", "PriorityName", "UserId" },
                 values: new object[,]
                 {
-                    { new Guid("21521056-e391-473c-a4ba-485be8cf62d7"), "Important", null },
-                    { new Guid("945d313f-e3b3-4b10-a823-d0d9c18ca4f3"), "Urgent & Important", null },
-                    { new Guid("d3cb887d-3a3c-4465-8ea1-2da0ce7e31b2"), "Urgent", null }
+                    { new Guid("0eb13bb3-a682-431b-ba2f-b702cd07142e"), "Important", null },
+                    { new Guid("1dd9650e-b708-4ef5-8772-44853fb5c91e"), "Urgent", null },
+                    { new Guid("f45713ab-23af-470d-a4ad-9accb2bafea8"), "Urgent & Important", null }
                 });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "UserId", "DateCreated", "Password", "Username" },
+                values: new object[] { new Guid("db221a5a-db6e-473a-ba5e-088649b6f5cb"), new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7120), new TimeSpan(0, 0, 0, 0, 0)), "adminPassword", "admin" });
+
+            migrationBuilder.InsertData(
+                table: "Tasks",
+                columns: new[] { "TaskId", "CreatedDate", "DateEnded", "Deadline", "Position", "PriorityId", "TaskName", "TaskNotes", "UserId" },
+                values: new object[] { new Guid("c4383029-e9b2-42a8-b216-814b541490d2"), new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7080), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7080), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2024, 8, 5, 6, 51, 3, 334, DateTimeKind.Unspecified).AddTicks(7040), new TimeSpan(0, 0, 0, 0, 0)), 0, new Guid("1dd9650e-b708-4ef5-8772-44853fb5c91e"), "Sample Task", "This is a sample task. Feel free to delete anytime", null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_PriorityList_UserId",

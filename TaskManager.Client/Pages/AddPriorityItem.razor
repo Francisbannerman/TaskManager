@@ -1,5 +1,6 @@
 ﻿@page "/addpriorityitem"
 @using System.Net.Http.Headers
+@using System.Runtime.InteropServices
 @using TaskManager.Client.AuthService
 
 <PageTitle>Add Priority Item</PageTitle>
@@ -40,6 +41,9 @@
     [Inject]
     private NavigationManager Navigation { get; set; }
 
+    [Inject] 
+    private AppState _appState { get; set; }
+
     private async System.Threading.Tasks.Task HandleAddPriorityItem()
     {
         try
@@ -51,6 +55,7 @@
             if (response.IsSuccessStatusCode)
             {
                 SuccessfulNavigateToPriorityPage();
+                _appState.SetLoginState(true);
             }
             else
             {

@@ -1,4 +1,5 @@
 @page "/updatetask/{taskId:guid}"
+@using System.ComponentModel
 @using System.Net
 @using System.Text
 @using System.Text.Json
@@ -62,6 +63,8 @@ else
     private UpdateTaskDto updateTaskDto = new UpdateTaskDto();
     [Inject]
     private AuthService _authService { get; set; }
+    [Inject]
+    private AppState _appState { get; set; }
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -90,6 +93,7 @@ else
         
         if (response.IsSuccessStatusCode)
         {
+            _appState.SetLoginState(true);
             Navigation.NavigateTo("/task", forceLoad:true);
         }
         else
